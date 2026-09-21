@@ -1,0 +1,127 @@
+/**
+ * @file monitoramento.c
+ * @brief Sistema de Monitoramento de Temperatura Industrial
+ * @author Ingrid
+ * @date Setembro, 2026
+ */
+
+#include <stdio.h>
+
+int main() {
+    float limite_temp = 0;
+    float temp_atual = 0;
+    
+    // Variáveis para estatísticas
+    int total_leituras = 0;
+    int leituras_validas = 0;
+    int acima_limite = 0;
+    int consecutivas_acima = 0;
+    
+    float soma_temp = 0;
+    float maior_temp = -999.0;
+    float menor_temp = 999.0;
+    
+    printf("==================================================\n");
+    printf("   SISTEMA DE MONITORAMENTO DE TEMPERATURA v1.0   \n");
+    printf("==================================================\n\n");
+    
+    // Laço DO...WHILE para garantir que um limite válido seja inserido
+    do {
+        printf("Defina o limite maximo de temperatura permitido (Celsius): ");
+        
+        // Se o usuário digitar letras, o scanf retorna 0
+        if (scanf("%f", &limite_temp) != 1) {
+            printf("[ERRO] Entrada invalida! Digite apenas numeros.\n\n");
+            scanf("%*s"); // Limpa a palavra errada do buffer de forma robusta no OnlineGDB
+            limite_temp = -999; // Força a repetição do laço
+            continue;
+        }
+        
+        if (limite_temp <= -273.15) {
+            printf("[AVISO] Temperatura abaixo do zero absoluto (-273.15C)! Tente novamente.\n\n");
+        }
+    } while (limite_temp <= -273.15);
+    
+    printf("\n[SUCESSO] Limite definido para: %.2f oC\n", limite_temp);
+    printf("Iniciando leituras. Digite -999 para encerrar manualmente.\n");
+    printf("O programa encerrara automaticamente apos 3 leituras consecutivas acima do limite.\n\n");
+    
+    // Laço WHILE para o monitoramento contínuo
+    while (consecutivas_acima < 3) {
+        printf("Digite a leitura da temperatura atual: ");
+        
+        // Validação contra caracteres alfabéticos
+        if (scanf("%f", &temp_atual) != 1) {
+            printf("[ERRO] Entrada invalida! Digite apenas numeros.\n\n");
+            scanf("%*s"); // Limpa o texto incorreto no OnlineGDB impedindo o loop infinito
+            total_leituras++; // Conta como tentativa de leitura processada
+            continue;
+        }
+        
+        // Condição de parada manual
+        if (temp_atual == -999) {
+            printf("\n[INFO] Monitoramento encerrado manualmente pelo operador.\n");
+            break;
+        }
+        
+        total_leituras++;
+        
+        // Validação física da temperatura
+        if (temp_atual <= -273.15 || temp_atual > 2000.0) {
+            printf("[AVISO] Temperatura fora dos limites fisicos aceitaveis. Desconsiderada.\n\n");
+            continue;
+        }
+        
+        // Processamento de dados válidos
+        leituras_validas++;
+        soma_temp += temp_atual;
+        
+        if (temp_atual > maior_temp) {
+            maior_temp = temp_atual;
+        }
+        if (temp_atual < menor_temp) {
+            menor_temp = temp_atual;
+        }
+        
+        // Verificação do limite de segurança
+        if (temp_atual > limite_temp) {
+            acima_limite++;
+            consecutivas_acima++;
+            printf("[ALERTA] Temperatura acima do limite! Consecutivas: %d/3\n\n", consecutivas_acima);
+        } else {
+            // Reinicia o contador se a temperatura voltar ao normal
+            consecutivas_acima = 0;
+            printf("[OK] Temperatura dentro da faixa de seguranca.\n\n");
+        }
+    }
+    
+    // Alarme automático disparado
+    if (consecutivas_acima == 3) {
+        printf("==================================================\n");
+        printf(" [PERIGO] ALARME DISPARADO: 3 LEITURAS ACIMA DO LIMITE!\n");
+        printf("         SISTEMA ENCERRADO AUTOMATICAMENTE.\n");
+        printf("==================================================\n\n");
+    }
+    
+    // Relatório Final e Cálculos Estatísticos
+    printf("==================================================\n");
+    printf("                RELATORIO FINAL                   \n");
+    printf("==================================================\n");
+    printf("Total de tentativas de leitura: %d\n", total_leituras);
+    printf("Quantidade de leituras validas: %d\n", leituras_validas);
+    
+    if (leituras_validas > 0) {
+        float media = soma_temp / leituras_validas;
+        float percentual_acima = ((float)acima_limite / leituras_validas) * 100;
+        
+        printf("Maior temperatura registrada: %.2f oC\n", maior_temp);
+        printf("Menor temperatura registrada: %.2f oC\n", menor_temp);
+        printf("Media das temperaturas validas: %.2f oC\n", media);
+        printf("Percentual de leituras acima do limite: %.2f%%\n", percentual_acima);
+    } else {
+        printf("[INFO] Nenhuma leitura valida foi registrada para gerar estatisticas.\n");
+    }
+    printf("==================================================\n");
+    
+    return 0;
+}
